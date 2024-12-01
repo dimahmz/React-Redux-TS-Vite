@@ -12,5 +12,3 @@ export default defineConfig({
     },
   },
 });
-
-console.log(__dirname)

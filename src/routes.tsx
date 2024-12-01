@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Dashboard from "@/Dashboard";
 import SignIn from "@/pages/SignIn"
+import Quotes from "@/pages/quotes"
+import Counter from "@/pages/counter"
 
 const router = createBrowserRouter([
   {
@@ -12,6 +14,16 @@ const router = createBrowserRouter([
     id:"login",
     path:"/login",
     Component: SignIn,
+  },
+  {
+    id:"quotes",
+    path:"/quotes",
+    Component: Quotes,
+  },
+  {
+    id:"counter",
+    path:"/counter",
+    Component: Counter,
   }
 ]);
 
