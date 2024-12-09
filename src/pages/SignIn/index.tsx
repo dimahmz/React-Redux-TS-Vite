@@ -1,103 +1,131 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import FormLabel from '@mui/material/FormLabel';
-import FormControl from '@mui/material/FormControl';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
-import MuiCard from '@mui/material/Card';
-import { styled } from '@mui/material/styles';
-import AppTheme from '../../theme/AppTheme';
-import ColorModeSelect from '../../theme/ColorModeSelect';
-import signinContent from "@/content/pages/signin.json"
-import { CardStyle, SignUpContainerStyle } from './signin.style';
+import * as React from "react";
+import Box from "@mui/material/Box";
+import LoadingButton from "@mui/lab/LoadingButton";
+import CssBaseline from "@mui/material/CssBaseline";
+import FormLabel from "@mui/material/FormLabel";
+import FormControl from "@mui/material/FormControl";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import MuiCard from "@mui/material/Card";
+import { styled } from "@mui/material/styles";
+import AppTheme from "../../theme/AppTheme";
+import ColorModeSelect from "../../theme/ColorModeSelect";
+import signinContent from "@/content/pages/signin.json";
+import { CardStyle, SignUpContainerStyle } from "./signin.style";
+import { SignInRequestBody } from "@/api/authApi";
+import { useAppDispatch, useAppSelector } from "@/hooks";
+import {
+  selectIsAuthenticated,
+  selectSignInStatus,
+  signInUser,
+  Status,
+} from "@/store/userSlice";
+import { useNavigate } from "react-router-dom";
+import SignInErrorSnackbar from "./components/snackbar";
 
+const SignUpContainer = styled(Stack)(({ theme }) =>
+  SignUpContainerStyle(theme)
+);
 
-const SignUpContainer = styled(Stack)(({ theme }) => (SignUpContainerStyle(theme)));
-
-const Card = styled(MuiCard)(({ theme }) => (CardStyle(theme)));
+const Card = styled(MuiCard)(({ theme }) => CardStyle(theme));
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
+  const [referenceError, setreferenceError] = React.useState(false);
+  const [referenceErrorMessage, setreferenceErrorMessage] = React.useState("");
   const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
+
+  const dispatcher = useAppDispatch();
+
+  const status: Status = useAppSelector(selectSignInStatus);
+  const isAuthenticated: boolean = useAppSelector(selectIsAuthenticated);
 
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    const password = document.getElementById('password') as HTMLInputElement;
+    const reference = document.getElementById("reference") as HTMLInputElement;
+    const password = document.getElementById("password") as HTMLInputElement;
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+    if (!reference.value || !/\b\d+\b/.test(reference.value)) {
+      setreferenceError(true);
+      setreferenceErrorMessage("Please enter a valid reference.");
       isValid = false;
     } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+      setreferenceError(false);
+      setreferenceErrorMessage("");
     }
 
     if (!password.value || password.value.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage("Password must be at least 6 characters long.");
       isValid = false;
     } else {
       setPasswordError(false);
-      setPasswordErrorMessage('');
+      setPasswordErrorMessage("");
     }
 
     return isValid;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (referenceError || passwordError) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      name: data.get('name'),
-      lastName: data.get('lastName'),
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+
+    const reference = document.getElementById("reference") as HTMLInputElement;
+    const password = document.getElementById("password") as HTMLInputElement;
+
+    const signInRequestBody: SignInRequestBody = {
+      password: password.value,
+      reference: parseInt(reference.value),
+    };
+
+    await dispatcher(signInUser(signInRequestBody));
+
+  
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
   };
 
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+      <ColorModeSelect sx={{ position: "fixed", top: "1rem", right: "1rem" }} />
+      <SignInErrorSnackbar />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
           <Typography
             component="h1"
             variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+            sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
           >
-            {signinContent.signin }
-            
+            {signinContent.signin}
           </Typography>
           <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <FormControl>
-              <FormLabel htmlFor="email">{signinContent.email}</FormLabel>
+              <FormLabel htmlFor="reference">
+                {signinContent.reference}
+              </FormLabel>
               <TextField
                 required
                 fullWidth
-                id="email"
-                placeholder="your@email.com"
-                name="email"
-                autoComplete="email"
+                id="reference"
+                placeholder="XXXX"
+                name="reference"
+                autoComplete="reference"
                 variant="outlined"
-                error={emailError}
-                helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                error={referenceError}
+                helperText={referenceErrorMessage}
+                color={passwordError ? "error" : "primary"}
               />
             </FormControl>
             <FormControl>
@@ -113,17 +141,18 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 variant="outlined"
                 error={passwordError}
                 helperText={passwordErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                color={passwordError ? "error" : "primary"}
               />
             </FormControl>
-            <Button
+            <LoadingButton
+              loading={status == "loading"}
               type="submit"
               fullWidth
               variant="contained"
               onClick={validateInputs}
             >
               {signinContent.signin}
-            </Button>
+            </LoadingButton>
           </Box>
         </Card>
       </SignUpContainer>
